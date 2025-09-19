@@ -25,7 +25,7 @@ jobs:
         cp frontend/resume.html dist/
         cp frontend/script.js dist/
         cp frontend/style.css dist/
-        cp frontend/Sudheer.jpg dist/
+        cp frontend/Sudheer.JPG dist/
 
     - name: Upload to blob storage
       uses: azure/CLI@v1
