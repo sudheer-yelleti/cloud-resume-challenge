@@ -19,11 +19,19 @@ jobs:
        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+    - name: Prepare dist folder
+      run: |
+        mkdir dist
+        cp frontend/resume.html dist/
+        cp frontend/script.js dist/
+        cp frontend/style.css dist/
+
     - name: Upload to blob storage
       uses: azure/CLI@v1
       with:
         inlineScript: |
-            az storage blob upload-batch --account-name visitorcounterstgacc --auth-mode key -d '$web' -s .
+            az storage blob upload-batch --account-name visitorcounterstgacc --auth-mode key -d '$web' -s ./dist
+
     - name: Purge CDN endpoint
       uses: azure/CLI@v1
       with:
