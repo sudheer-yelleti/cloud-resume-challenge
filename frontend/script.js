@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 async function callAzureFunction() {
   try {
-    const response = await fetch("https://getvisitordata-gdd6ewafg9dmcyev.canadacentral-01.azurewebsites.net/api/GetVisitorCount", {
+    const response = await fetch("https://getvisitordata.azurewebsites.net/api/GetVisitorCount", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
