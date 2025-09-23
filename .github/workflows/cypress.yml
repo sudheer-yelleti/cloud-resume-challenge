@@ -20,14 +20,17 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
+        working-directory: ./cloud-resume-challenge-frontend 
         run: npm ci
 
       - name: Start Python HTTP server
+        working-directory: ./cloud-resume-challenge-frontend 
         run: |
           python -m http.server 5000 &
           echo "Server started on port 5000"
 
       - name: Run Cypress tests
+        working-directory: ./cloud-resume-challenge-frontend 
         env:
          CYPRESS_BASE_URL: http://localhost:5000
         run: npm run cypress:run
