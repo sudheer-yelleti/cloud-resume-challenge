@@ -17,6 +17,7 @@ describe('Visitor number changes on multiple reloads', () => {
         })
         .invoke('text')
         .then((text) => {
+          cy.log(`Div text: ${text}`);
           const visitorNumber = parseInt(text.match(/\d+/)[0], 10);
 
           expect(previousNumbers, 'Visitor number has changed').not.to.include(visitorNumber);
