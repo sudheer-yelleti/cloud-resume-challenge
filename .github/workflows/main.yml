@@ -9,7 +9,7 @@ permissions:
       contents: read
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -41,3 +41,29 @@ jobs:
       run: |
             az logout
       if: always()
+      
+  cypress-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start Python HTTP server
+        working-directory: frontend 
+        run: |
+          python -m http.server 5000 &
+          echo "Server started on port 5000"
+
+      - name: Run Cypress tests
+        env:
+         CYPRESS_BASE_URL: http://localhost:5000
+        run: npm run cypress:run   
