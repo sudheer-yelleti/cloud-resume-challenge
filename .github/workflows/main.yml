@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   cypress-run:
+    name: Run Cypress E2E Tests 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -36,6 +37,7 @@ jobs:
 
   build-deploy:
     runs-on: ubuntu-latest
+    name: Build and Deploy Frontend to Azure
     needs: cypress-run
     steps:
       - uses: actions/checkout@v3
