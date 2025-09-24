@@ -1,27 +1,33 @@
-describe('Div text changes on multiple page reloads', () => {
-  // const url = 'https://localhost:5000/index.html'; // replace with your page URL
-  const divSelector = 'result'; // replace with your div selector
-  const reloadCount = 5; // number of reloads to check
+describe('Visitor number changes on multiple reloads', () => {
+  const divSelector = '#result'; // adjust if needed
+  const reloadCount = 5;
 
-  it('should have different text on each reload', () => {
-    let previousTexts = [];
+  it('should show a different visitor number on each reload', { timeout: 180000 }, () => {
+    let previousNumbers = [];
 
-    function checkTextChange(reloadsLeft) {
-      cy.visit();
-      cy.get(divSelector)
+    function checkVisitorNumber(reloadsLeft) {
+      cy.visit('/index.html', { timeout: 60000 });
+
+      // Wait until the text contains a number
+      cy.get(divSelector, { timeout: 60000 })
+        .should(($el) => {
+          const text = $el.text().trim();
+          const match = text.match(/\d+/);
+          expect(match, 'Visitor number exists').to.not.be.null;
+        })
         .invoke('text')
         .then((text) => {
-          const trimmedText = text.trim();
-          // Ensure new text is not equal to any previous text
-          expect(previousTexts).not.to.include(trimmedText);
-          previousTexts.push(trimmedText);
+          const visitorNumber = parseInt(text.match(/\d+/)[0], 10);
+
+          expect(previousNumbers, 'Visitor number has changed').not.to.include(visitorNumber);
+          previousNumbers.push(visitorNumber);
 
           if (reloadsLeft > 1) {
-            checkTextChange(reloadsLeft - 1);
+            checkVisitorNumber(reloadsLeft - 1);
           }
         });
     }
 
-    checkTextChange(reloadCount);
+    checkVisitorNumber(reloadCount);
   });
 });

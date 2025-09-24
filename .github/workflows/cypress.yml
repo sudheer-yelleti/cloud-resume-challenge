@@ -23,6 +23,7 @@ jobs:
         run: npm ci
 
       - name: Start Python HTTP server
+        working-directory: frontend 
         run: |
           python -m http.server 5000 &
           echo "Server started on port 5000"
