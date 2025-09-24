@@ -1,48 +1,17 @@
-name: CI with OpenID Connect
+name: CI with Azure Deploy + Cypress
 
 on:
-    push:
-        branches: [ main ]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
-      id-token: write
-      contents: read
+  id-token: write
+  contents: read
 
 jobs:
   build-deploy:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: azure/login@v2
-      with:
-       client-id: ${{ secrets.AZURE_CLIENT_ID }}
-       tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-       subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-    - name: Prepare dist folder
-      run: |
-        mkdir dist
-        cp -r frontend/* dist/
-
-    - name: Upload to blob storage
-      uses: azure/CLI@v1
-      with:
-        inlineScript: |
-            az storage blob upload-batch --account-name visitorcounterstgaccdev --overwrite --auth-mode key -d '$web' -s ./dist
-
-    - name: Purge CDN endpoint
-      uses: azure/CLI@v1
-      with:
-        inlineScript: |
-           az cdn endpoint purge --content-paths  "/*" --profile-name "cdn-profile-cloud-resume" --name "cdn-endpoint-cloud-resume-challenge-eacaejd2d0hmeqhy.z03.azurefd.net" --resource-group "cloud-resume-challenge-dev"
-
-  # Azure logout
-    - name: logout
-      run: |
-            az logout
-      if: always()
-      
-  cypress-run:
     runs-on: ubuntu-latest
 
     steps:
@@ -54,16 +23,67 @@ jobs:
         with:
           node-version: 20
 
+      - name: Prepare dist folder
+        run: |
+          mkdir dist
+          cp -r frontend/* dist/
+
+      - name: Upload to Azure Blob Storage
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az storage blob upload-batch \
+              --account-name visitorcounterstgaccdev \
+              --overwrite \
+              --auth-mode key \
+              -d '$web' \
+              -s ./dist
+
+      - name: Purge Azure CDN endpoint
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az cdn endpoint purge \
+              --content-paths "/*" \
+              --profile-name "cdn-profile-cloud-resume" \
+              --name "cdn-endpoint-cloud-resume-challenge-eacaejd2d0hmeqhy.z03.azurefd.net" \
+              --resource-group "cloud-resume-challenge-dev"
+
+      - name: Azure logout
+        run: az logout
+        if: always()
+
+  cypress-run:
+    runs-on: ubuntu-latest
+    needs: build-deploy
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
       - name: Install dependencies
+        working-directory: frontend
         run: npm ci
 
       - name: Start Python HTTP server
-        working-directory: frontend 
+        working-directory: frontend
         run: |
           python -m http.server 5000 &
           echo "Server started on port 5000"
+          # Wait until server responds to avoid race conditions
+          for i in {1..10}; do
+            curl -s http://localhost:5000 && break
+            echo "Waiting for server..."
+            sleep 2
+          done
 
       - name: Run Cypress tests
+        working-directory: frontend
         env:
-         CYPRESS_BASE_URL: http://localhost:5000
-        run: npm run cypress:run   
+          CYPRESS_BASE_URL: http://localhost:5000
+        run: npm run cypress:run
